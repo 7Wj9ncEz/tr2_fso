@@ -117,7 +117,11 @@ int main() {
 		int random_travessias = rand() % 10;
 		printf("Criança %i chegou e vai brincar %d vezes ...\n", count, random_travessias);
 		fflush(stdout);
-		liga_crianca(count%2, count, random_travessias);
+		if(count<=num_criancas_esq){
+			liga_crianca(0, count, random_travessias);
+		}else{
+			liga_crianca(1, count, random_travessias);
+		}
   	} 
   	else {
 		/* Estou no processo pai ... */
