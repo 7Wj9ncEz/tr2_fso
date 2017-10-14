@@ -114,6 +114,7 @@ int main() {
 		free(pid);
 		pid = NULL;
 
+		srand( (unsigned)time(NULL) + count );
 		int random_travessias = rand() % 10;
 		printf("Criança %i chegou e vai brincar %d vezes ...\n", count, random_travessias);
 		fflush(stdout);
