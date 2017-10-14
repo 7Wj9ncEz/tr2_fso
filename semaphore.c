@@ -13,10 +13,20 @@
 #define ATRAVESSANDO 3
 #define CANSADO 4
 
-int		g_sem_id, count;
+int		g_sem_id, count, count_initial, *pid;
 
 struct sembuf	g_lock_sembuf[1];
 struct sembuf	g_unlock_sembuf[1];
+
+void acabar_com_brincadeira(){
+	count = 0;
+	/* Matando os processos filhos  */
+	for(int i = 0; i <count_initial ; i++) 
+	{
+		kill(pid[i], SIGTERM);
+	}
+	printf("\nUsuario: Acacou a brincadeira galera, vão pra casa!\n");
+}
 
 void retira_crianca(){
 	count -= 1;
@@ -69,16 +79,13 @@ void liga_crianca(int lado, int id, int num_travessias) {
 int main() {
 	int num_criancas_dir = 0;
 	int num_criancas_esq = 0;
-	int num_travessias = 0;
 	printf("Digite a quantidade de criancas: ESQUERDA DIREITA\n");
 	scanf("%d %d", &num_criancas_esq, &num_criancas_dir);
 
-	printf("Digite o numero de travesias:");
-	scanf("%d", &num_travessias);
 
 
 	int rtn;
-	int * pid = malloc(sizeof(int)*(num_criancas_esq+num_criancas_dir));
+	pid = malloc(sizeof(int)*(num_criancas_esq+num_criancas_dir));
 
 	/* Construindo a estrutura de controle do semaforo */
 	g_lock_sembuf[0].sem_num   = 0; g_lock_sembuf[0].sem_op   = -1;g_lock_sembuf[0].sem_flg   = 0;
@@ -98,23 +105,34 @@ int main() {
 	      break;
 	    }
 	}
+	count_initial = count;
 
 
 	/* Verificando o valor retornado para determinar se o processo e pai ou filho  */
   	if( rtn == 0 ) {
 		/* Estou no processo filho... */
-		printf("Filho %i comecou ...\n", count);
+		free(pid);
+		pid = NULL;
+
+		int random_travessias = rand() % 10;
+		printf("Criança %i chegou e vai brincar %d vezes ...\n", count, random_travessias);
 		fflush(stdout);
-		liga_crianca(count%2, count, num_travessias);
+		liga_crianca(count%2, count, random_travessias);
   	} 
   	else {
-		  signal(SIGUSR1,retira_crianca);
 		/* Estou no processo pai ... */
+		signal(SIGUSR1,retira_crianca);
+		signal(SIGINT, acabar_com_brincadeira);
+		  
 		//esperando ate todas as crianças se cansarem
 		while(count>0){
 			sleep(1);
 		}
-		printf("TODAS AS CRIANÇAS SE CANSARAM E FORAM EMBORA.\n");
+		printf("TODAS AS CRIANÇAS FORAM EMBORA.\n");
+		
+		//liberando memoria alocada
+		free(pid);
+		pid = NULL;
 		/* Removendo o semaforo */
 		semctl(g_sem_id, 0, IPC_RMID, 0);
   	} /* fim-else */
